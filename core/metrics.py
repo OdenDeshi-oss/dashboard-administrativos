@@ -65,6 +65,38 @@ def indice_satisfaccion(df_enc: pd.DataFrame) -> float:
     return round((top2 / len(all_vals)) * 100, 1)
 
 
+def satisfaccion_por_area(df_enc_raw: pd.DataFrame, df_inv_raw: pd.DataFrame) -> pd.DataFrame:
+    """Personas satisfechas (promedio Likert ≥4) vs inventario por área."""
+    from core.mappings import COL_AREA_ENC, COL_AREA_INV
+    # Calcular promedio Likert por persona
+    scores = []
+    for _, row in df_enc_raw.iterrows():
+        vals = []
+        for q in LIKERT_QUESTIONS:
+            scale_map = get_scale_map(q["scale"])
+            v = scale_map.get(row[q["col"]])
+            if v is not None:
+                vals.append(v)
+        prom = np.mean(vals) if vals else None
+        scores.append({"Área": row[COL_AREA_ENC], "prom": prom})
+    df_scores = pd.DataFrame(scores).dropna(subset=["prom"])
+
+    # Inventario por área
+    inv_c = df_inv_raw.groupby(COL_AREA_INV).size().reset_index(name="Inventario")
+    inv_c.rename(columns={COL_AREA_INV: "Área"}, inplace=True)
+
+    rows = []
+    for area, group in df_scores.groupby("Área"):
+        satisfechos = int((group["prom"] >= 4).sum())
+        n_respondieron = len(group)
+        inventario = int(inv_c.loc[inv_c["Área"] == area, "Inventario"].values[0]) if area in inv_c["Área"].values else n_respondieron
+        pct = round((satisfechos / inventario) * 100, 1) if inventario > 0 else 0.0
+        rows.append({"Área": area, "Satisfechos": satisfechos,
+                     "Respondieron": n_respondieron, "Inventario": inventario,
+                     "% Satisfacción": pct})
+    return pd.DataFrame(rows).sort_values("% Satisfacción", ascending=True).reset_index(drop=True)
+
+
 def calcular_nps(df_enc: pd.DataFrame) -> dict:
     """NPS tradicional escala 0-10."""
     vals = df_enc[COL_NPS].dropna()

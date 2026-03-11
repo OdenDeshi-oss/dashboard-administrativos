@@ -90,12 +90,8 @@ def render_extras(df_enc: pd.DataFrame) -> None:
 
     # ── 5. Actividad favorita (barras horizontales) ─────────
     _section_title("⭐", "Actividad que más te ha gustado")
-    af = df_enc[COL_ACTIVIDAD_FAV].value_counts()
-    af_clean = af[af.index != "No participé"]
-    if af_clean.empty:
+    af = df_enc[COL_ACTIVIDAD_FAV].fillna("No participó").replace("", "No participó").value_counts()
+    af = af.rename(index={"No participé": "No participó"})
+    if af.empty:
         st.info("Sin datos."); return
-    _bar_chart(list(reversed(af_clean.index.tolist())), list(reversed(af_clean.values.tolist())), "act_fav", 260)
-
-    no_part = af.get("No participé", 0)
-    if no_part > 0:
-        st.caption(f"ℹ️ No participaron: {no_part} persona(s) ({round(no_part/af.sum()*100,1)}%)")
+    _bar_chart(list(reversed(af.index.tolist())), list(reversed(af.values.tolist())), "act_fav", max(260, len(af) * 38))

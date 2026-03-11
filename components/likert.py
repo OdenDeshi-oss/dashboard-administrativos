@@ -33,7 +33,7 @@ def render_likert_detail(df_enc: pd.DataFrame) -> None:
         st.markdown(f"""<div style="background:rgba(13,13,107,0.6); border:1px solid #1a1a7a;
             border-left:4px solid {AMARILLO}; border-radius:6px; padding:10px 16px; margin:24px 0 4px 0;">
             <span style="color:{BLANCO}; font-weight:600; font-size:1.05rem;">{key}</span>
-        </div><p style="color:#8888aa; font-size:0.82rem; margin:2px 0 10px 0;">{col_orig}</p>""",
+        </div><p style="color:#c8c8e0; font-size:0.95rem; margin:2px 0 10px 0;">{col_orig}</p>""",
             unsafe_allow_html=True)
 
         dist = distribucion_pregunta(df_enc, key)

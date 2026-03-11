@@ -16,7 +16,7 @@ from components.ranking import render_ranking
 from components.likert import render_likert_detail
 from components.extras import render_extras
 from components.text_block import render_text_blocks
-from components.cumplimiento import render_cumplimiento
+from components.cumplimiento import render_cumplimiento, render_satisfaccion_por_area
 
 # ── CSS Corporativo ──────────────────────────────────────────
 st.markdown("""
@@ -113,6 +113,10 @@ st.divider()
 
 # ── Cumplimiento por área ────────────────────────────────────
 render_cumplimiento(df_enc, df_inv, df_enc_raw, df_inv_raw, sel_area)
+st.divider()
+
+# ── Satisfacción por área ────────────────────────────────────
+render_satisfaccion_por_area(df_enc_raw, df_inv_raw, sel_area)
 st.divider()
 
 # ── NPS Detail ───────────────────────────────────────────────

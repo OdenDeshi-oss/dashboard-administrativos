@@ -1,8 +1,10 @@
-"""cumplimiento.py - Cumplimiento por área (solo con filtro activo)."""
+"""cumplimiento.py - Cumplimiento y Satisfacción por área."""
 import streamlit as st
 import plotly.graph_objects as go
 import pandas as pd
 from core.mappings import COL_AREA_ENC, COL_AREA_INV
+from core.metrics import satisfaccion_por_area
+
 
 AZUL_LIGHT = "#1a1a8a"
 AMARILLO = "#FFB239"
@@ -49,6 +51,45 @@ def render_cumplimiento(df_enc, df_inv, df_enc_raw, df_inv_raw, sel_area):
         plot_bgcolor="#FFF", paper_bgcolor="#FFF",
         xaxis=dict(showticklabels=False, showgrid=False, zeroline=False,
                    range=[0, m["% Cumplimiento"].max() * 1.3]),
+        yaxis=dict(tickfont=dict(color="#333", size=11), gridcolor="rgba(0,0,0,0)"),
+        bargap=0.3,
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+
+def render_satisfaccion_por_area(df_enc_raw: pd.DataFrame, df_inv_raw: pd.DataFrame, sel_area: str) -> None:
+    st.markdown('<p class="section-title">😊 Satisfacción por Área</p>', unsafe_allow_html=True)
+
+    df_sat = satisfaccion_por_area(df_enc_raw, df_inv_raw)
+
+    has_area = sel_area and sel_area != "Todos"
+    if has_area:
+        row = df_sat[df_sat["Área"] == sel_area]
+        if not row.empty:
+            r = row.iloc[0]
+            c1, c2, c3 = st.columns(3)
+            with c1: st.metric("👥 Inventario", f"{int(r['Inventario']):,}")
+            with c2: st.metric("😊 Satisfechos", f"{int(r['Satisfechos']):,}")
+            with c3: st.metric("📊 % Satisfacción", f"{r['% Satisfacción']}%")
+        return
+
+    max_pct = df_sat["% Satisfacción"].max()
+    colors = [AMARILLO if p == max_pct else AZUL_LIGHT for p in df_sat["% Satisfacción"]]
+
+    fig = go.Figure(go.Bar(
+        x=df_sat["% Satisfacción"], y=df_sat["Área"], orientation="h",
+        text=[f"{pct}% ({sat}/{inv})" for pct, sat, inv in zip(
+            df_sat["% Satisfacción"], df_sat["Satisfechos"], df_sat["Inventario"])],
+        textposition="outside", textfont=dict(color="#333", size=12),
+        marker_color=colors, marker_line=dict(width=1, color="#FFF"),
+        cliponaxis=False,
+    ))
+    fig.update_layout(
+        height=max(300, len(df_sat) * 32 + 60),
+        margin=dict(t=10, b=20, l=10, r=160),
+        plot_bgcolor="#FFF", paper_bgcolor="#FFF",
+        xaxis=dict(showticklabels=False, showgrid=False, zeroline=False,
+                   range=[0, max_pct * 1.35]),
         yaxis=dict(tickfont=dict(color="#333", size=11), gridcolor="rgba(0,0,0,0)"),
         bargap=0.3,
     )
