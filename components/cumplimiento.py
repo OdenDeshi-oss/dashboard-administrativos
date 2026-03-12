@@ -68,8 +68,8 @@ def render_satisfaccion_por_area(df_enc_raw: pd.DataFrame, df_inv_raw: pd.DataFr
         if not row.empty:
             r = row.iloc[0]
             c1, c2, c3 = st.columns(3)
-            with c1: st.metric("👥 Inventario", f"{int(r['Inventario']):,}")
-            with c2: st.metric("😊 Satisfechos", f"{int(r['Satisfechos']):,}")
+            with c1: st.metric("📊 Resp. Likert", f"{int(r['Respondieron']):,}")
+            with c2: st.metric("😊 Top-2-Box (≥4)", f"{int(r['Satisfechos']):,}")
             with c3: st.metric("📊 % Satisfacción", f"{r['% Satisfacción']}%")
         return
 

@@ -66,33 +66,27 @@ def indice_satisfaccion(df_enc: pd.DataFrame) -> float:
 
 
 def satisfaccion_por_area(df_enc_raw: pd.DataFrame, df_inv_raw: pd.DataFrame) -> pd.DataFrame:
-    """Personas satisfechas (promedio Likert ≥4) vs inventario por área."""
+    """Top-2-Box por área: % de respuestas Likert >= 4, misma fórmula que el KPI global."""
     from core.mappings import COL_AREA_ENC, COL_AREA_INV
-    # Calcular promedio Likert por persona
-    scores = []
+
+    # Expandir todas las respuestas Likert con su área
+    records = []
     for _, row in df_enc_raw.iterrows():
-        vals = []
+        area = row[COL_AREA_ENC]
         for q in LIKERT_QUESTIONS:
             scale_map = get_scale_map(q["scale"])
             v = scale_map.get(row[q["col"]])
             if v is not None:
-                vals.append(v)
-        prom = np.mean(vals) if vals else None
-        scores.append({"Área": row[COL_AREA_ENC], "prom": prom})
-    df_scores = pd.DataFrame(scores).dropna(subset=["prom"])
-
-    # Inventario por área
-    inv_c = df_inv_raw.groupby(COL_AREA_INV).size().reset_index(name="Inventario")
-    inv_c.rename(columns={COL_AREA_INV: "Área"}, inplace=True)
+                records.append({"Área": area, "val": int(v)})
+    df_resp = pd.DataFrame(records)
 
     rows = []
-    for area, group in df_scores.groupby("Área"):
-        satisfechos = int((group["prom"] >= 4).sum())
-        n_respondieron = len(group)
-        inventario = int(inv_c.loc[inv_c["Área"] == area, "Inventario"].values[0]) if area in inv_c["Área"].values else n_respondieron
-        pct = round((satisfechos / inventario) * 100, 1) if inventario > 0 else 0.0
-        rows.append({"Área": area, "Satisfechos": satisfechos,
-                     "Respondieron": n_respondieron, "Inventario": inventario,
+    for area, group in df_resp.groupby("Área"):
+        total_resp = len(group)
+        top2 = int((group["val"] >= 4).sum())
+        pct = round((top2 / total_resp) * 100, 1) if total_resp > 0 else 0.0
+        rows.append({"Área": area, "Satisfechos": top2,
+                     "Respondieron": total_resp, "Inventario": total_resp,
                      "% Satisfacción": pct})
     return pd.DataFrame(rows).sort_values("% Satisfacción", ascending=True).reset_index(drop=True)
 
